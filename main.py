@@ -48,7 +48,7 @@ class Card(object):
     #   return self
     # if self.suit != suit and other_card.suit == suit:
     #   return other_card
-    print 'comparing ' + str(self) + ' and ' + str(other_card)
+    print ('comparing ' + str(self) + ' and ' + str(other_card))
     if suit == self.T or self.suit == other_card.suit:
       return other_card.num > self.num
     if self.suit == self.T and other_card.suit != self.T:
@@ -72,7 +72,7 @@ class Deck(object):
     cards.append(Card(17, Card.T))
     cards.append(Card(18, Card.T))
 
-    self.cards = decks * cards
+    self.cards = int(decks) * cards
     self.shuffle()
 
     self.size = decks * 54
@@ -126,7 +126,7 @@ class Trick(object):
 
   def addCard(self, card):
     self.cards.append(card)
-    print card
+    print(card)
 
   def biggest(self):
     biggestCard = self.cards[0]
@@ -149,23 +149,27 @@ class Game(object):
 
   def start(self):
     self.deal()
+    # fix later
+    self.trump = Card.SUITS[random.randint(0,3)]
+    print('Trump Suit is ' + self.trump)
     self.bottomExchange()
     self.tricks = []
     start_player = 0
     while not self.players[0].hand.empty():
-      print 'Player ' + str(start_player) + ' starting'
+      print('Player ' + str(start_player) + ' starting')
       t = Trick()
       for i in range(self.num_players):
         t.addCard(self.players[(i+start_player)%4].hand.removeCard(0))
       start_player = t.biggest()
-      print 'Player ' + str(start_player) + ' won'
-
+      print('Player ' + str(start_player) + ' won')
+      self.tricks.append(t)
+      # raw_input("              continue...")
 
   def bottomExchange(self):
     pass
 
   def deal(self):
-    for i in range(self.deck.size - self.bottom_size):
+    for i in range(int(self.deck.size - self.bottom_size)):
       self.players[i%4].hand.addCard(self.deck.getNextCard())
     for i in range(self.bottom_size):
       self.bottom.append(self.deck.getNextCard())
