@@ -25,29 +25,23 @@ class Card(object):
     14: 'ace',
     15: 'trump number',
     16: 'trump number trump suit',
-    17: 'small',
-    18: 'big'
+    17: 'small joker',
+    18: 'big joker'
   }
 
   def __str__(self):
-    return self.NUM[self.num] + " " + self.suit
+    a = self.NUM[self.actual_num] + " " + self.actual_suit
+    if self.num != self.actual_num or self.suit != self.actual_suit:
+      a +=" (" + self.NUM[self.num] + " " + self.suit + ")"
+    return a
 
   def __init__(self, num, suit):
     self.num = num
     self.suit = suit
     self.actual_num = num
+    self.actual_suit = suit
 
   def smallerThan(self, suit, other_card):
-    # if suit == T or self.suit == other_card.suit:
-    #   return other_card if other_card.num > self.num else self
-    # if self.suit == T and other_card.suit != T:
-    #   return self
-    # if self.suit != T and other_card.suit == T:
-    #   return other_card
-    # if self.suit == suit and other_card.suit != suit:
-    #   return self
-    # if self.suit != suit and other_card.suit == suit:
-    #   return other_card
     print ('comparing ' + str(self) + ' and ' + str(other_card))
     if suit == self.T or self.suit == other_card.suit:
       return other_card.num > self.num
@@ -61,6 +55,14 @@ class Card(object):
       return True
     raise Exception('Could not compare cards')
 
+  def trumpify(self, suit, num):
+    if self.suit == suit:
+      self.suit = self.T
+      if self.num == num:
+        self.num = 16
+    elif self.num == num:
+      self.suit = self.T
+      self.num = 15
 
 class Deck(object):
 
@@ -80,12 +82,6 @@ class Deck(object):
 
   def shuffle(self):
     random.shuffle(self.cards)
-
-  # def getCards(self):
-  #   current = 0
-  #   while current < self.size:
-  #     yield self.cards[current]
-  #     current += 1
 
   def getNextCard(self):
     if self.current < self.size:
@@ -110,6 +106,13 @@ class Hand(object):
   def empty(self):
     return len(self.cards) == 0
 
+  def trumpify(self, suit, num):
+    for card in self.cards:
+      card.trumpify(suit, num)
+
+  def sort(self):
+    self.cards = sorted(self.cards, key=lambda x: (x.suit, x.num))
+
 class Player(object):
 
   def __init__(self):
@@ -130,12 +133,12 @@ class Trick(object):
 
   def biggest(self):
     biggestCard = self.cards[0]
-    biggestPosition = -1
+    biggestPosition = 0
     for i, card in enumerate(self.cards[1:]):
       if biggestCard.smallerThan(self.suit, card):
         biggestCard = card
-        biggestPosition = i
-    return biggestPosition+1
+        biggestPosition = i + 1
+    return biggestPosition
 
 class Game(object):
 
@@ -145,13 +148,19 @@ class Game(object):
     self.deck = Deck(num_players / 2)
     # fix later
     self.bottom_size = 8
-    self.bottom = []
+    self.bottom = Hand()
 
   def start(self):
     self.deal()
     # fix later
-    self.trump = Card.SUITS[random.randint(0,3)]
-    print('Trump Suit is ' + self.trump)
+    self.trump_suit = Card.SUITS[random.randint(0,3)]
+    print('Trump Suit is ' + self.trump_suit)
+    self.trump_num = 2
+    print('Trump Num is ' + str(self.trump_num))
+    for hand in [x.hand for x in self.players] + [self.bottom]:
+      hand.trumpify(self.trump_suit, self.trump_num)
+      hand.sort()
+
     self.bottomExchange()
     self.tricks = []
     start_player = 0
@@ -163,7 +172,6 @@ class Game(object):
       start_player = t.biggest()
       print('Player ' + str(start_player) + ' won')
       self.tricks.append(t)
-      # raw_input("              continue...")
 
   def bottomExchange(self):
     pass
@@ -172,10 +180,7 @@ class Game(object):
     for i in range(int(self.deck.size - self.bottom_size)):
       self.players[i%4].hand.addCard(self.deck.getNextCard())
     for i in range(self.bottom_size):
-      self.bottom.append(self.deck.getNextCard())
-
-    # for i, card in enumerate(d.getCards()):
-      # self.players[i%4].hand.addCard(card)
+      self.bottom.addCard(self.deck.getNextCard())
 
 game = Game(4)
 game.start()
