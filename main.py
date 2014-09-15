@@ -42,7 +42,7 @@ class Card(object):
     self.actual_suit = suit
 
   def smallerThan(self, suit, other_card):
-    print ('comparing ' + str(self) + ' and ' + str(other_card))
+    # print ('comparing ' + str(self) + ' and ' + str(other_card))
     if suit == self.T or self.suit == other_card.suit:
       return other_card.num > self.num
     if self.suit == self.T and other_card.suit != self.T:
@@ -82,6 +82,7 @@ class Deck(object):
 
   def shuffle(self):
     random.shuffle(self.cards)
+    self.current = 0
 
   def getNextCard(self):
     if self.current < self.size:
@@ -113,6 +114,15 @@ class Hand(object):
   def sort(self):
     self.cards = sorted(self.cards, key=lambda x: (x.suit, x.num))
 
+  def points(self):
+    p = 0
+    for card in self.cards:
+      if card.actual_num == 5:
+        p += 5
+      elif card.actual_num == 10 or card.actual_num == 13: # ten or kings
+        p += 10
+    return p
+
 class Player(object):
 
   def __init__(self):
@@ -140,19 +150,46 @@ class Trick(object):
         biggestPosition = i + 1
     return biggestPosition
 
-class Game(object):
+  def points(self):
+    p = 0
+    for card in self.cards:
+      if card.actual_num == 5:
+        p += 5
+      elif card.actual_num == 10 or card.actual_num == 13: # ten or kings
+        p += 10
+    return p
 
-  def __init__(self, num_players):
-    self.num_players = num_players
-    self.players = [Player() for i in range(num_players)]
-    self.deck = Deck(num_players / 2)
-    # fix later
-    self.bottom_size = 8
+class Round(object):
+
+  def __init__(self, deck, players, trump_num, defenders):
+    self.deck = deck
+    self.players = players
+    self.num_players = len(players)
     self.bottom = Hand()
+    self.trump_num = trump_num
+    self.defenders = defenders # 0 for even, 1 for odd, -1 for first round
+    self.attackers = (defenders + 1) % 2
+    self.score = 0
+    self.bottom_size = 8
+
+  def bottomExchange(self):
+    pass
+
+  def deal(self):
+    self.deck.shuffle()
+    for i in range(int(self.deck.size - self.bottom_size)):
+      self.players[i%4].hand.addCard(self.deck.getNextCard())
+    for i in range(self.bottom_size):
+      self.bottom.addCard(self.deck.getNextCard())
 
   def start(self):
     self.deal()
     # fix later
+
+    # first round, first to declare is defending
+    if self.defenders == -1:
+      self.defenders = 0
+      self.attackers = 1
     self.trump_suit = Card.SUITS[random.randint(0,3)]
     print('Trump Suit is ' + self.trump_suit)
     self.trump_num = 2
@@ -165,25 +202,65 @@ class Game(object):
     self.tricks = []
     start_player = 0
     while not self.players[0].hand.empty():
-      print('Player ' + str(start_player) + ' starting')
+      print('   Player ' + str(start_player) + ' starting')
       t = Trick()
       for i in range(self.num_players):
         t.addCard(self.players[(i+start_player)%4].hand.removeCard(0))
       start_player = t.biggest()
-      print('Player ' + str(start_player) + ' won')
+      print('   Player ' + str(start_player) + ' won')
+      if start_player % 2 != self.defenders:
+        print('      Points was at ' + str(self.score))
+        self.score += t.points()
+        print('      Points are now at ' + str(self.score))
       self.tricks.append(t)
 
-  def bottomExchange(self):
-    pass
+    if start_player % 2 != self.defenders:
+      print('Points on the bottom: ' + str(self.bottom.points()))
+      self.score += 2 * self.bottom.points()
 
-  def deal(self):
-    for i in range(int(self.deck.size - self.bottom_size)):
-      self.players[i%4].hand.addCard(self.deck.getNextCard())
-    for i in range(self.bottom_size):
-      self.bottom.addCard(self.deck.getNextCard())
+    print('Final score ' + str(self.score))
 
-game = Game(4)
-game.start()
+    # fix for not 80 points:
+    if self.score == 0:
+      return (self.defenders, 3)
+    if self.score > 0 and self.score < 40:
+      return (self.defenders, 2)
+    if self.score >= 40 and self.score < 80:
+      return (self.defenders, 1)
+    if self.score >= 80 and self.score < 120:
+      return (self.attackers, 0)
+    if self.score >= 120 and self.score < 160:
+      return (self.attackers, 1)
+    if self.score >= 160 and self.score < 200:
+      return (self.attackers, 2)
+    return (self.attackers, 3)
+
+class Game(object):
+
+  def __init__(self, num_players):
+    self.num_players = num_players
+    self.players = [Player() for i in range(num_players)]
+    self.deck = Deck(num_players / 2)
+    # fix later
+    self.round_scores = [2, 2]
+
+  def start(self):
+    r = Round(self.deck, self.players, 2, -1)
+    last_won, jump = r.start()
+    self.round_scores[last_won] += jump
+    print(str(last_won) + " " + str(jump))
+    while self.round_scores[0] < 15 and self.round_scores[1] < 15:
+      r = Round(self.deck, self.players, self.round_scores[last_won], last_won)
+      last_won, jump = r.start()
+      self.round_scores[last_won] += jump
+      print('Score Count: ' + str(last_won) + ' ' + str(self.round_scores))
+      input('   weeeeeeeeeeeee')
 
 
+def main():
+  game = Game(4)
+  game.start()
+
+if __name__ == "__main__":
+  main()
 
