@@ -1,0 +1,32 @@
+<html>
+  <body>
+    <textarea id="game" rows="30" cols="100"></textarea>
+    <input type="text" id="name"  value="josh" placeholder="Name"></input>
+    <button onclick="ready()">Ready</button>
+    <button onclick="start()">Start</button>
+    <script>
+
+      var ws = new WebSocket("ws://192.168.1.73:7000/ws");
+
+      ws.onopen = function(event) {
+        ws.send("hello");
+      };
+
+      ws.onmessage = function(event) {
+        document.getElementById("game").value += event.data +'\n';
+      };
+
+      function ready() {
+        var name = document.getElementById("name").value;
+        ws.send("ready " + name);
+      }
+
+      function start() {
+        ws.send("start");
+      }
+
+    </script>
+  </body>
+
+</html>
+
