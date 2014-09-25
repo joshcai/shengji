@@ -3,6 +3,7 @@ import game
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+import toro
 
 
 g = game.Game()
@@ -16,6 +17,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
   def open(self):
     print("WebSocket opened")
+    self.q = toro.Queue(maxsize=1)
 
   def on_message(self, message):
     print(message)
@@ -26,12 +28,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       g.broadcast(m[1] + ' has joined')
     elif m[0] == 'start':
       g.start()
+    elif m[0] == 'message':
+      self.q.put(m[1])
 
     self.write_message(u"You said: " + message)
 
   def on_close(self):
-    g.broadcast(self.name + " has left")
+    # g.broadcast(self.name + " has left")
     print("WebSocket closed")
+
 
 
 app = tornado.web.Application([

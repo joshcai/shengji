@@ -1,6 +1,10 @@
 import random
+import time
 
 import cards
+
+from tornado.ioloop import IOLoop
+import tornado.gen
 
 class Player(object):
 
@@ -25,20 +29,26 @@ class Round(object):
     self.score = 0
     self.bottom_size = 8
 
+  @tornado.gen.coroutine
   def bottomExchange(self):
     pass
 
+  @tornado.gen.coroutine
   def deal(self):
     self.deck.shuffle()
     for i in range(int(self.deck.size - self.bottom_size)):
-      self.players[i%4].hand.addCard(self.deck.getNextCard())
+      card = self.deck.getNextCard()
+      self.players[i%4].hand.addCard(card)
       if self.players[i%4].ws:
-        self.players[i%4].sendMessage(str(self.deck.getNextCard()))
+        self.players[i%4].sendMessage(str(card))
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .01)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
 
+  @tornado.gen.coroutine
   def start(self):
-    self.deal()
+    yield self.deal()
+    print('DONE DEALING')
     # TODO: first round, first to declare is defending
     if self.defenders == -1:
       self.defenders = 0
@@ -51,13 +61,15 @@ class Round(object):
       hand.trumpify(self.trump_suit, self.trump_num)
       hand.sort()
 
-    self.bottomExchange()
+    yield self.bottomExchange()
     self.tricks = []
     start_player = 0
     while not self.players[0].hand.empty():
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()
       for i in range(self.num_players):
+        message = yield self.players[i%4].ws.q.get()
+        print('GOT MESSAGE')
         t.addCard(self.players[(i+start_player)%4].hand.removeCard(0))
       start_player = t.biggest()
       print('   Player ' + str(start_player) + ' won')
@@ -105,10 +117,12 @@ class Game(object):
 
   # TODO: remove player function
 
+  @tornado.gen.coroutine
   def start(self):
     r = Round(self.deck, self.players, 2, -1)
+    # print('Winner + jump: ' + str(last_won) + " " + str(jump))
     while True:
-      last_won, jump = r.start()
+      last_won, jump = yield r.start()
       self.round_scores[last_won] += jump
       # TODO: make sure doesn't jump past 5/10/K
       print('Winner + jump: ' + str(last_won) + " " + str(jump))
@@ -117,6 +131,7 @@ class Game(object):
         break
       r = Round(self.deck, self.players, self.round_scores[last_won], last_won)
       input('   weeeeeeeeeeeee')
+
 
   def broadcast(self, message):
     for player in self.players:

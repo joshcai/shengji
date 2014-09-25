@@ -4,12 +4,15 @@
     <input type="text" id="name"  value="josh" placeholder="Name"></input>
     <button onclick="ready()">Ready</button>
     <button onclick="start()">Start</button>
+    <button onclick="message()">Message</button>
     <script>
 
       var ws = new WebSocket("ws://192.168.1.73:7000/ws");
 
       ws.onopen = function(event) {
         ws.send("hello");
+        var name = document.getElementById("name").value;
+        ws.send("ready " + name);
       };
 
       ws.onmessage = function(event) {
@@ -23,6 +26,10 @@
 
       function start() {
         ws.send("start");
+      }
+
+      function message() {
+        ws.send("message wooo");
       }
 
     </script>
