@@ -127,8 +127,6 @@ class Hand(Cards):
   def sort(self):
     self.cards = sorted(self.cards, key=lambda x: (x.suit, x.num))
 
-
-
 class Trick(Cards):
 
   @property

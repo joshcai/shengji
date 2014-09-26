@@ -5,9 +5,11 @@
     <button onclick="ready()">Ready</button>
     <button onclick="start()">Start</button>
     <button onclick="message()">Message</button>
+    <button onclick="declare()">declare</button>
     <script>
 
       var ws = new WebSocket("ws://192.168.1.73:7000/ws");
+      var player_num;
 
       ws.onopen = function(event) {
         ws.send("hello");
@@ -16,7 +18,14 @@
       };
 
       ws.onmessage = function(event) {
-        document.getElementById("game").value += event.data +'\n';
+        var m = event.data.split(" ");
+        switch(m[0]) {
+          case "assign":
+            player_num = m[1];
+            break;
+          default:
+            document.getElementById("game").value += event.data +'\n';
+        }
       };
 
       function ready() {
@@ -31,6 +40,11 @@
       function message() {
         ws.send("message wooo");
       }
+
+      function declare() {
+        ws.send("declare " + player_num);
+      }
+
 
     </script>
   </body>
