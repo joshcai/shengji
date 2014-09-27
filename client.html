@@ -1,15 +1,48 @@
 <html>
   <body>
-    <textarea id="game" rows="30" cols="100"></textarea>
-    <input type="text" id="name"  value="josh" placeholder="Name"></input>
-    <button onclick="ready()">Ready</button>
-    <button onclick="start()">Start</button>
-    <button onclick="message()">Message</button>
-    <button onclick="declare()">declare</button>
+    <div style="text-align: center">
+      <input type="text" id="name"  value="josh" placeholder="Name"></input>
+      <button onclick="ready()">Ready</button>
+      <button onclick="start()">Start</button>
+      <input type="text" id="card"  value="0" placeholder="Card num"></input>
+      <button onclick="playCard()">Play Card</button>
+      <select id="declare">
+        <option value="clubs" selected="selected">clubs</option>
+        <option value="diamonds">diamonds</option>
+        <option value="hearts">hearts</option>
+        <option value="spades">spades</option>
+      </select>
+      <button onclick="declare()">declare</button>
+      <button onclick="bottomExchange()">bottomExchange</button>
+      <br>
+      <textarea id="game" rows="45" cols="100"></textarea>
+      <br>
+      <textarea id="cardsArea" rows="5" cols="100"></textarea>
+    </div>
     <script>
 
       var ws = new WebSocket("ws://192.168.1.73:7000/ws");
-      var player_num;
+      var player_num, cards;
+
+      var NUM = {
+        "2": "two",
+        "3": "three",
+        "4": "four",
+        "5": "five",
+        "6": "six",
+        "7": "seven",
+        "8": "eight",
+        "9": "nine",
+        "10": "ten",
+        "11": "jack",
+        "12": "queen",
+        "13": "king",
+        "14": "ace",
+        "15": "trump number",
+        "16": "trump number trump suit",
+        "17": "small joker",
+        "18": "big joker"
+      }
 
       ws.onopen = function(event) {
         ws.send("hello");
@@ -23,8 +56,12 @@
           case "assign":
             player_num = m[1];
             break;
+          case "cards":
+            cards = JSON.parse(m[1]);
+            renderCards();
+            break;
           default:
-            document.getElementById("game").value += event.data +'\n';
+            document.getElementById("game").value += event.data +"\n";
         }
       };
 
@@ -37,14 +74,33 @@
         ws.send("start");
       }
 
-      function message() {
-        ws.send("message wooo");
+      function playCard() {
+        var cardNum = document.getElementById("card").value;
+        ws.send("play " + cardNum);
+        cards.splice(cardNum, 1);
+        renderCards();
+
       }
 
       function declare() {
-        ws.send("declare " + player_num);
+        var e = document.getElementById("declare");
+        var suit = e.options[e.selectedIndex].value;
+        ws.send("declare " + player_num + " " + suit);
       }
 
+      function bottomExchange() {
+        ws.send("bottomExchange bottom info goes here");
+      }
+
+      function renderCards() {
+        // use react for this later
+        var value = "";
+        for(var i = 0; i < cards.length; i++)
+        {
+          value += i + " " + NUM[cards[i].actual_num] + " " + cards[i].actual_suit + " ";
+        }
+        document.getElementById("cardsArea").value = value;
+      }
 
     </script>
   </body>

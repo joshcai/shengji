@@ -1,3 +1,4 @@
+import json
 import random
 
 class Card(object):
@@ -28,6 +29,7 @@ class Card(object):
     17: 'small joker',
     18: 'big joker'
   }
+
 
   def __str__(self):
     a = self.NUM[self.actual_num] + " " + self.actual_suit
@@ -91,11 +93,21 @@ class Deck(object):
 
 class Cards(object):
 
+  def __str__(self):
+    return str([str(x) for x in self.cards])
+
   def __init__(self):
     self.cards = []
 
+  def __getitem__(self, index):
+    return self.cards[index]
+
   def addCard(self, card):
     self.cards.append(card)
+
+  def convertToJson(self):
+    temp_cards = [{'suit': card.suit, 'num': card.num, 'actual_suit': card.actual_suit, 'actual_num': card.actual_num} for card in self.cards]
+    return json.dumps(temp_cards, separators=(',', ':'))
 
   def points(self):
     p = 0
@@ -107,9 +119,6 @@ class Cards(object):
     return p
 
 class Hand(Cards):
-
-  def __str__(self):
-    return str([str(x) for x in self.cards])
 
   def __init__(self):
     super(Hand, self).__init__()

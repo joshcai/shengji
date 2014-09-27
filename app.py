@@ -17,24 +17,28 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
   def open(self):
     print("WebSocket opened")
-    self.q = toro.Queue(maxsize=1)
+    self.clientMessages = toro.Queue(maxsize=5)
 
   def on_message(self, message):
     print(message)
     m = message.split(' ')
     if m[0] == 'ready':
       self.name = m[1]
-      g.addPlayer(m[1], self)
+      g.players.add(m[1], self)
+      g.num_players += 1
       g.players.sendMessage(m[1] + ' has joined')
       self.write_message('assign ' + str(g.num_players))
       self.write_message('You are player: ' + str(g.num_players))
     elif m[0] == 'start':
       g.messages = toro.Queue(maxsize=4)
       g.start()
-    elif m[0] == 'message':
-      self.q.put(m[1])
+    elif m[0] == 'play':
+      self.clientMessages.put(m[1])
     elif m[0] == 'declare':
-      g.messages.put(m[1])
+      # m[1] is player num, m[2] is suit
+      g.messages.put((m[1], m[2]))
+    elif m[0] == 'bottomExchange':
+      self.clientMessages.put('bottom info goes here')
 
     self.write_message(u"You said: " + message)
 

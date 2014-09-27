@@ -16,6 +16,9 @@ class Player(object):
   def sendMessage(self, message):
     self.ws.write_message(message)
 
+  def fromClient(self):
+    return self.ws.clientMessages
+
 class Players(object):
 
   def __init__(self):
@@ -23,6 +26,9 @@ class Players(object):
 
   def __len__(self):
     return len(self.players)
+
+  def __getitem__(self, index):
+    return self.players[index]
 
   def __iter__(self):
     self.a = 0
@@ -35,15 +41,14 @@ class Players(object):
     self.a += 1
     return result
 
-  def add(self, player):
-    self.players.append(player)
+  def add(self, name, ws):
+    self.players.append(Player(name, ws))
+
+  # TODO: removePlayer function
 
   def sendMessage(self, message):
     for player in self.players:
       player.sendMessage(message)
-
-  def at(self, num):
-    return self.players[num]
 
 class Round(object):
 
@@ -52,6 +57,7 @@ class Round(object):
     self.deck = game.deck
     self.players = game.players
     self.num_players = len(self.players)
+    self.hands = [x.hand for x in self.players]
     self.bottom = cards.Hand()
     self.trump_num = trump_num
     self.defenders = defenders # 0 for even, 1 for odd, -1 for first round
@@ -63,54 +69,66 @@ class Round(object):
 
   @tornado.gen.coroutine
   def bottomExchange(self):
-    pass
+    self.players[self.bottom_player].sendMessage('Bottom:\n' + str(self.bottom))
+    info = yield self.players[self.bottom_player].fromClient().get()
+    print(info)
+    self.players.sendMessage('Bottom has been swapped out')
+
 
   @tornado.gen.coroutine
   def declare(self):
-    p = yield self.messages.get() # number of player
+    p, suit = yield self.messages.get() # number of player
     for player in self.players:
       player.sendMessage(p + ' has declared')
-    return int(p)
+    return int(p), suit
 
   @tornado.gen.coroutine
   def deal(self):
     self.deck.shuffle()
     for i in range(int(self.deck.size - self.bottom_size)):
       card = self.deck.getNextCard()
-      self.players.at(i%4).hand.addCard(card)
-      self.players.at(i%4).sendMessage(str(card))
-      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .25)
+      self.hands[i%4].addCard(card)
+      self.players[i%4].sendMessage(str(card))
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .1)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
     print('DONE DEALING')
 
   @tornado.gen.coroutine
   def start(self):
-    _, declarer = yield [self.deal(), self.declare()]
+    _, (declarer, suit) = yield [self.deal(), self.declare()]
     print('DONE DEALING + DECLARING')
     if self.defenders == -1:
       self.bottom_player = declarer - 1
       self.defenders = (declarer - 1) % 2
       self.attackers = declarer % 2
-    self.trump_suit = cards.Card.SUITS[random.randint(0,3)]
+    start_player = self.bottom_player
+    self.trump_suit = suit
     print('Trump Suit is ' + self.trump_suit)
-    self.trump_num = 2
     print('Trump Num is ' + str(self.trump_num))
-    for hand in [x.hand for x in self.players] + [self.bottom]:
+    for hand in self.hands + [self.bottom]:
       hand.trumpify(self.trump_suit, self.trump_num)
       hand.sort()
+    for player in self.players:
+      player.sendMessage('cards ' + player.hand.convertToJson())
 
     yield self.bottomExchange()
     self.tricks = []
-    start_player = 0
-    while not self.players.at(0).hand.empty():
+    while not self.hands[0].empty():
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()
       for i in range(self.num_players):
-        message = yield self.players.at(i%4).ws.q.get()
-        t.addCard(self.players.at((i+start_player)%4).hand.removeCard(0))
-      start_player = t.biggest()
-      print('   Player ' + str(start_player) + ' won')
+        turn = (i+start_player) % 4
+        self.players[turn].sendMessage('Your turn!')
+        cardNum = yield self.players[turn].fromClient().get()
+        cardNum = int(cardNum)
+        # if i == 0:
+          # self.players.sendMessage('tricktype ' + )
+        played_card = self.hands[turn].removeCard(cardNum)
+        self.players.sendMessage('Player ' + str(turn) + ' played ' + str(played_card))
+        t.addCard(played_card)
+      start_player = (t.biggest() + start_player) % 4
+      self.players.sendMessage('Player ' + str(start_player) + ' won last trick')
       if start_player % 2 != self.defenders:
         print('      Points was at ' + str(self.score))
         self.score += t.points()
@@ -150,12 +168,6 @@ class Game(object):
     self.round_scores = [2, 2]
     self.messages = None
 
-  def addPlayer(self, name="No name", ws=None):
-    self.players.add(Player(name, ws))
-    self.num_players += 1
-
-  # TODO: remove player function
-
   @tornado.gen.coroutine
   def start(self):
     r = Round(self, 2, -1, -1)
@@ -174,12 +186,3 @@ class Game(object):
         break
       r = Round(self, self.round_scores[last_won], last_won, bottom_player)
       input('   weeeeeeeeeeeee')
-
-
-if __name__ == "__main__":
-  g = Game(4)
-  g.addPlayer(name="1")
-  g.addPlayer(name="2")
-  g.addPlayer(name="3")
-  g.addPlayer(name="4")
-  g.start()
