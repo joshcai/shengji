@@ -69,11 +69,17 @@ class Round(object):
 
   @tornado.gen.coroutine
   def bottomExchange(self):
-    self.players[self.bottom_player].sendMessage('Bottom:\n' + str(self.bottom))
-    info = yield self.players[self.bottom_player].fromClient().get()
-    print(info)
-    self.players.sendMessage('Bottom has been swapped out')
+    player = self.players[self.bottom_player]
+    hand = self.hands[self.bottom_player]
 
+    player.sendMessage('Exchange bottom now!')
+    bottom = yield player.fromClient().get()
+    bottom = [int(x) for x in bottom.split(',')]
+    for i in sorted(bottom, reverse=True):
+      self.bottom.addCard(hand.removeCard(i))
+    self.players.sendMessage('Bottom has been swapped out')
+    player.sendMessage('cards ' + hand.convertToJson())
+    player.sendMessage('Bottom:\n' + str(self.bottom))
 
   @tornado.gen.coroutine
   def declare(self):
@@ -92,21 +98,20 @@ class Round(object):
       yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .01)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
-    print('DONE DEALING')
 
   @tornado.gen.coroutine
   def start(self):
     _, (declarer, suit) = yield [self.deal(), self.declare()]
-    print('DONE DEALING + DECLARING')
     if self.defenders == -1:
       self.bottom_player = declarer - 1
       self.defenders = (declarer - 1) % 2
       self.attackers = declarer % 2
-    start_player = self.bottom_player
     self.trump_suit = suit
-    print('Trump Suit is ' + self.trump_suit)
-    print('Trump Num is ' + str(self.trump_num))
-    for hand in self.hands + [self.bottom]:
+    self.players.sendMessage('Trump Suit is ' + self.trump_suit)
+    self.players.sendMessage('Trump Num is ' + str(self.trump_num))
+    while not self.bottom.empty():
+      self.hands[self.bottom_player].addCard(self.bottom.removeCard(0))
+    for hand in self.hands:
       hand.trumpify(self.trump_suit, self.trump_num)
       hand.sort()
     for player in self.players:
@@ -114,6 +119,7 @@ class Round(object):
 
     yield self.bottomExchange()
     self.tricks = []
+    start_player = self.bottom_player
     while not self.hands[0].empty():
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()

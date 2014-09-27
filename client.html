@@ -71,6 +71,7 @@
             break;
           case "score":
             renderScore(m[1]);
+            break;
           default:
             addToChat(event.data);
         }
@@ -105,7 +106,14 @@
       }
 
       function bottomExchange() {
-        ws.send("bottomExchange bottom info goes here");
+        var bottom = document.getElementById("card").value.split(" ");
+        if(bottom.length != 8) {
+          addToChat('Needs 8 total cards!');
+        }
+        else
+        {
+          ws.send("bottomExchange " + bottom);
+        }
       }
 
       function renderCards() {

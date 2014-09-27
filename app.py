@@ -38,7 +38,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       # m[1] is player num, m[2] is suit
       g.messages.put((m[1], m[2]))
     elif m[0] == 'bottomExchange':
-      self.clientMessages.put('bottom info goes here')
+      bottom = set(m[1].split(','))
+      # TODO: check none are out of bounds
+      if len(bottom) == 8:
+        self.clientMessages.put(m[1])
+      else:
+        self.write_message('Need 8 unique cards')
 
     self.write_message(u"You said: " + message)
 
