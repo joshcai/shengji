@@ -1,8 +1,9 @@
 <html>
   <body>
     <div style="text-align: center">
+      <span id="score"></span>&nbsp;&nbsp;
       <input type="text" id="name"  value="josh" placeholder="Name"></input>
-      <button onclick="ready()">Ready</button>
+      <!-- <button onclick="ready()">Ready</button> -->
       <button onclick="start()">Start</button>
       <input type="text" id="card"  value="0" placeholder="Card num"></input>
       <button onclick="playCard()">Play Card</button>
@@ -52,6 +53,7 @@
         ws.send("hello");
         var name = document.getElementById("name").value;
         ws.send("ready " + name);
+        renderScore(0);
       };
 
       ws.onmessage = function(event) {
@@ -67,6 +69,8 @@
           case "tricktype":
             current_suit = m[1];
             break;
+          case "score":
+            renderScore(m[1]);
           default:
             addToChat(event.data);
         }
@@ -84,12 +88,10 @@
       function playCard() {
         var cardNum = document.getElementById("card").value;
         var c = cards[cardNum];
-        if(c.suit != current_suit && containsSuit(current_suit))
-        {
+        if(c.suit != current_suit && containsSuit(current_suit)) {
           addToChat('Illegal move!');
         }
-        else
-        {
+        else {
           ws.send("play " + cardNum);
           cards.splice(cardNum, 1);
           renderCards();
@@ -114,6 +116,11 @@
           value += i + " " + NUM[cards[i].actual_num] + " " + cards[i].actual_suit + " ";
         }
         document.getElementById("cardsArea").value = value;
+      }
+
+      function renderScore(score) {
+        var span = document.getElementById('score');
+        span.innerHTML = score;
       }
 
       function containsSuit(suit) {

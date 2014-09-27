@@ -120,7 +120,7 @@ class Round(object):
       for i in range(self.num_players):
         turn = (i+start_player) % 4
         self.players[turn].sendMessage('Your turn!')
-        while True:
+        while True: # prevent cheating
           cardNum = yield self.players[turn].fromClient().get()
           cardNum = int(cardNum)
           if i == 0 or self.hands[turn][cardNum].suit == t[0].suit or not self.hands[turn].containsSuit(t[0].suit):
@@ -134,14 +134,14 @@ class Round(object):
       start_player = (t.biggest() + start_player) % 4
       self.players.sendMessage('Player ' + str(start_player) + ' won last trick')
       if start_player % 2 != self.defenders:
-        print('      Points was at ' + str(self.score))
         self.score += t.points()
-        print('      Points are now at ' + str(self.score))
+        self.players.sendMessage('score ' + str(self.score))
       self.tricks.append(t)
 
     if start_player % 2 != self.defenders:
-      print('Points on the bottom: ' + str(self.bottom.points()))
+      self.players.sendMessage('Points on the bottom: ' + str(self.bottom.points()))
       self.score += 2 * self.bottom.points()
+      self.players.sendMessage('score ' + str(self.score))
 
     print('Final score ' + str(self.score))
 
