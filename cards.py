@@ -136,6 +136,12 @@ class Hand(Cards):
   def sort(self):
     self.cards = sorted(self.cards, key=lambda x: (x.suit, x.num))
 
+  def containsSuit(self, suit):
+    for card in self.cards:
+      if card.suit == suit:
+        return True
+    return False
+
 class Trick(Cards):
 
   @property

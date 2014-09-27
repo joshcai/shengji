@@ -89,7 +89,7 @@ class Round(object):
       card = self.deck.getNextCard()
       self.hands[i%4].addCard(card)
       self.players[i%4].sendMessage(str(card))
-      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .1)
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .01)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
     print('DONE DEALING')
@@ -120,11 +120,15 @@ class Round(object):
       for i in range(self.num_players):
         turn = (i+start_player) % 4
         self.players[turn].sendMessage('Your turn!')
-        cardNum = yield self.players[turn].fromClient().get()
-        cardNum = int(cardNum)
-        # if i == 0:
-          # self.players.sendMessage('tricktype ' + )
+        while True:
+          cardNum = yield self.players[turn].fromClient().get()
+          cardNum = int(cardNum)
+          if i == 0 or self.hands[turn][cardNum].suit == t[0].suit or not self.hands[turn].containsSuit(t[0].suit):
+            break
+          self.players[turn].sendMessage('Illegal move')
         played_card = self.hands[turn].removeCard(cardNum)
+        if i == 0:
+          self.players.sendMessage('tricktype ' + played_card.suit)
         self.players.sendMessage('Player ' + str(turn) + ' played ' + str(played_card))
         t.addCard(played_card)
       start_player = (t.biggest() + start_player) % 4
@@ -185,4 +189,3 @@ class Game(object):
       if self.round_scores[0] >= 15 or self.round_scores[1] >= 15:
         break
       r = Round(self, self.round_scores[last_won], last_won, bottom_player)
-      input('   weeeeeeeeeeeee')

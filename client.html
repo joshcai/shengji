@@ -22,7 +22,7 @@
     <script>
 
       var ws = new WebSocket("ws://192.168.1.73:7000/ws");
-      var player_num, cards;
+      var player_num, cards, current_suit;
 
       var NUM = {
         "2": "two",
@@ -44,6 +44,10 @@
         "18": "big joker"
       }
 
+      function addToChat(message) {
+            document.getElementById("game").value += message +"\n";
+      };
+
       ws.onopen = function(event) {
         ws.send("hello");
         var name = document.getElementById("name").value;
@@ -60,8 +64,11 @@
             cards = JSON.parse(m[1]);
             renderCards();
             break;
+          case "tricktype":
+            current_suit = m[1];
+            break;
           default:
-            document.getElementById("game").value += event.data +"\n";
+            addToChat(event.data);
         }
       };
 
@@ -76,10 +83,17 @@
 
       function playCard() {
         var cardNum = document.getElementById("card").value;
-        ws.send("play " + cardNum);
-        cards.splice(cardNum, 1);
-        renderCards();
-
+        var c = cards[cardNum];
+        if(c.suit != current_suit && containsSuit(current_suit))
+        {
+          addToChat('Illegal move!');
+        }
+        else
+        {
+          ws.send("play " + cardNum);
+          cards.splice(cardNum, 1);
+          renderCards();
+        }
       }
 
       function declare() {
@@ -93,13 +107,24 @@
       }
 
       function renderCards() {
-        // use react for this later
+        // TODO: use react for this later
         var value = "";
         for(var i = 0; i < cards.length; i++)
         {
           value += i + " " + NUM[cards[i].actual_num] + " " + cards[i].actual_suit + " ";
         }
         document.getElementById("cardsArea").value = value;
+      }
+
+      function containsSuit(suit) {
+        // TODO: put into object later
+        // TODO: replace with a counter for each type of card, decrease each time a card is played
+        for(var i = 0; i < cards.length; i++) {
+          if(cards[i].suit == suit) {
+            return true;
+          }
+        }
+        return false;
       }
 
     </script>
