@@ -16,14 +16,15 @@
       <button onclick="declare()">declare</button>
       <button onclick="bottomExchange()">bottomExchange</button>
       <br>
-      <textarea id="game" rows="45" cols="100"></textarea>
+      <textarea id="game" rows="35" cols="100"></textarea>
       <br>
       <textarea id="cardsArea" rows="5" cols="100"></textarea>
     </div>
     <script>
 
-      var ws = new WebSocket("ws://192.168.1.73:7000/ws");
-      var player_num, cards, current_suit;
+      var ws = new WebSocket("ws://localhost:7000/ws");
+      var player_num, current_suit, trump_num, num_counter;
+      var cards = [];
 
       var NUM = {
         "2": "two",
@@ -62,6 +63,11 @@
           case "assign":
             player_num = m[1];
             break;
+          case "deal":
+            cards.push(JSON.parse(m[1]));
+            addToChat(stringifyCard(cards[cards.length-1]))
+            renderCards();
+            break;
           case "cards":
             cards = JSON.parse(m[1]);
             renderCards();
@@ -71,6 +77,13 @@
             break;
           case "score":
             renderScore(m[1]);
+            break;
+          case "trumpnum":
+            trump_num = m[1]; // nums are passed as strings here (fix later?)
+            addToChat('Trump num is: ' + trump_num);
+            break;
+          case "numcounter":
+            num_counter = parseInt(m[1], 10);
             break;
           default:
             addToChat(event.data);
@@ -102,7 +115,12 @@
       function declare() {
         var e = document.getElementById("declare");
         var suit = e.options[e.selectedIndex].value;
-        ws.send("declare " + player_num + " " + suit);
+        if(containsCard(suit, trump_num, num_counter+1)) {
+          ws.send("declare " + player_num + " " + suit);
+        }
+        else {
+          addToChat('You don\'t have enough to declare that.');
+        }
       }
 
       function bottomExchange() {
@@ -121,7 +139,7 @@
         var value = "";
         for(var i = 0; i < cards.length; i++)
         {
-          value += i + " " + NUM[cards[i].actual_num] + " " + cards[i].actual_suit + " ";
+          value += i + " " + stringifyCard(cards[i]);
         }
         document.getElementById("cardsArea").value = value;
       }
@@ -140,6 +158,23 @@
           }
         }
         return false;
+      }
+
+      function containsCard(suit, num, times) {
+        var count = 0;
+        for(var i = 0; i < cards.length; i++) {
+          if(cards[i].suit == suit && cards[i].num == num) {
+            count += 1;
+          }
+          if(count == times) {
+            return true
+          }
+        }
+        return false;
+      }
+
+      function stringifyCard(card) {
+        return NUM[card.actual_num] + " " + card.actual_suit + " ";
       }
 
     </script>

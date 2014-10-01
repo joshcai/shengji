@@ -5,7 +5,6 @@ import tornado.web
 import tornado.websocket
 import toro
 
-
 g = game.Game()
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -50,7 +49,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
   def on_close(self):
     # g.broadcast(self.name + " has left")
     print("WebSocket closed")
-
 
 
 app = tornado.web.Application([

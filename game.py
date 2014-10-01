@@ -94,13 +94,15 @@ class Round(object):
     for i in range(int(self.deck.size - self.bottom_size)):
       card = self.deck.getNextCard()
       self.hands[i%4].addCard(card)
-      self.players[i%4].sendMessage(str(card))
-      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .01)
+      self.players[i%4].sendMessage('deal ' + card.convertToJson())
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .25)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
 
   @tornado.gen.coroutine
   def start(self):
+    self.players.sendMessage('trumpnum ' + str(self.trump_num))
+    self.players.sendMessage('numcounter ' + str(0))
     _, (declarer, suit) = yield [self.deal(), self.declare()]
     if self.defenders == -1:
       self.bottom_player = declarer - 1

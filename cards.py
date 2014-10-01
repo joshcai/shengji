@@ -66,6 +66,10 @@ class Card(object):
       self.suit = self.T
       self.num = 15
 
+  def convertToJson(self):
+    temp_card = {'suit': self.suit, 'num': self.num, 'actual_suit': self.actual_suit, 'actual_num': self.actual_num}
+    return json.dumps(temp_card, separators=(',', ':'))
+
 class Deck(object):
 
   def __str__(self):
