@@ -83,10 +83,19 @@ class Round(object):
 
   @tornado.gen.coroutine
   def declare(self):
-    p, suit = yield self.messages.get() # number of player
-    for player in self.players:
-      player.sendMessage(p + ' has declared')
-    return int(p), suit
+    counter = 0
+    message = yield self.messages.get() # number of player
+    while message != 'finished dealing': 
+      p, suit = message.split()
+      p = int(p)
+      if self.players[p-1].hand.containsCard(suit, self.trump_num, counter+1):
+        counter += 1
+        self.players.sendMessage(str(p) + ' has declared')
+        self.players.sendMessage('numcounter ' + str(counter))
+      else:
+        self.players[p-1].sendMessage('You can\'t declare that!')
+      message = yield self.messages.get()
+    return p, suit
 
   @tornado.gen.coroutine
   def deal(self):
@@ -95,9 +104,10 @@ class Round(object):
       card = self.deck.getNextCard()
       self.hands[i%4].addCard(card)
       self.players[i%4].sendMessage('deal ' + card.convertToJson())
-      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .25)
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .5)
     for i in range(self.bottom_size):
       self.bottom.addCard(self.deck.getNextCard())
+    self.messages.put('finished dealing')
 
   @tornado.gen.coroutine
   def start(self):

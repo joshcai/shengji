@@ -122,6 +122,15 @@ class Cards(object):
         p += 10
     return p
 
+  def containsCard(self, suit, num, times=1):
+    count = 0
+    for card in self.cards:
+      if card.suit == suit and card.num == num:
+        count += 1
+      if count == times:
+        return True
+    return False
+
 class Hand(Cards):
 
   def __init__(self):

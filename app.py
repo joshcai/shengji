@@ -29,13 +29,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       self.write_message('assign ' + str(g.num_players))
       self.write_message('You are player: ' + str(g.num_players))
     elif m[0] == 'start':
-      g.messages = toro.Queue(maxsize=4)
+      g.messages = toro.Queue(maxsize=10)
       g.start()
     elif m[0] == 'play':
       self.clientMessages.put(m[1])
     elif m[0] == 'declare':
       # m[1] is player num, m[2] is suit
-      g.messages.put((m[1], m[2]))
+      g.messages.put(m[1] + ' ' + m[2])
     elif m[0] == 'bottomExchange':
       bottom = set(m[1].split(','))
       # TODO: check none are out of bounds
