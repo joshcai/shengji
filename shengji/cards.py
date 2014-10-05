@@ -106,7 +106,7 @@ class Cards(object):
   def __getitem__(self, index):
     return self.cards[index]
 
-  def addCard(self, card):
+  def append(self, card):
     self.cards.append(card)
 
   def convertToJson(self):
@@ -122,7 +122,15 @@ class Cards(object):
         p += 10
     return p
 
-  def containsCard(self, suit, num, times=1):
+  def __contains__(self, key):
+    if len(key) == 3:
+      num, suit, times = key
+    elif len(key) == 2:
+      num, suit = key
+      times = 1
+    else:
+      raise Exception('Wrong number of arguments in tuple')
+
     count = 0
     for card in self.cards:
       if card.suit == suit and card.num == num:

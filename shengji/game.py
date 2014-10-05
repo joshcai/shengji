@@ -76,7 +76,7 @@ class Round(object):
     bottom = yield player.fromClient().get()
     bottom = [int(x) for x in bottom.split(',')]
     for i in sorted(bottom, reverse=True):
-      self.bottom.addCard(hand.removeCard(i))
+      self.bottom.append(hand.removeCard(i))
     self.players.sendMessage('Bottom has been swapped out')
     player.sendMessage('cards ' + hand.convertToJson())
     player.sendMessage('Bottom:\n' + str(self.bottom))
@@ -88,7 +88,7 @@ class Round(object):
     while message != 'finished dealing': 
       p, suit = message.split()
       p = int(p)
-      if self.players[p-1].hand.containsCard(suit, self.trump_num, counter+1):
+      if (self.trump_num, suit, counter+1) in self.players[p-1].hand:
         counter += 1
         self.players.sendMessage(str(p) + ' has declared')
         self.players.sendMessage('numcounter ' + str(counter))
@@ -102,11 +102,11 @@ class Round(object):
     self.deck.shuffle()
     for i in range(int(self.deck.size - self.bottom_size)):
       card = self.deck.getNextCard()
-      self.hands[i%4].addCard(card)
+      self.hands[i%4].append(card)
       self.players[i%4].sendMessage('deal ' + card.convertToJson())
       yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .5)
     for i in range(self.bottom_size):
-      self.bottom.addCard(self.deck.getNextCard())
+      self.bottom.append(self.deck.getNextCard())
     self.messages.put('finished dealing')
 
   @tornado.gen.coroutine
@@ -122,7 +122,7 @@ class Round(object):
     self.players.sendMessage('Trump Suit is ' + self.trump_suit)
     self.players.sendMessage('Trump Num is ' + str(self.trump_num))
     while not self.bottom.empty():
-      self.hands[self.bottom_player].addCard(self.bottom.removeCard(0))
+      self.hands[self.bottom_player].append(self.bottom.removeCard(0))
     for hand in self.hands:
       hand.trumpify(self.trump_suit, self.trump_num)
       hand.sort()
@@ -148,7 +148,7 @@ class Round(object):
         if i == 0:
           self.players.sendMessage('tricktype ' + played_card.suit)
         self.players.sendMessage('Player ' + str(turn) + ' played ' + str(played_card))
-        t.addCard(played_card)
+        t.append(played_card)
       start_player = (t.biggest() + start_player) % 4
       self.players.sendMessage('Player ' + str(start_player) + ' won last trick')
       if start_player % 2 != self.defenders:
