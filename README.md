@@ -15,7 +15,7 @@ This is currently being developed using Python 3.4.1 with the Tornado framework.
 
 ```shell
 pip install -r requirements.txt
-python app.py
+python shengji/app.py
 ```
 
 You'll also want to serve the client file, which you can do simply with: 
@@ -25,3 +25,9 @@ python -m SimpleHTTPServer
 ```
 
 or any other HTTP server. Then, navigate to `http://localhost:8000/client.html` from any browser that supports WebSockets (pretty much all modern browsers). 
+
+You can run the tests using:
+
+```shell
+python -m unittest discover test
+```
