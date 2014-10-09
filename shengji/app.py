@@ -24,6 +24,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     if m[0] == 'ready':
       self.name = m[1]
       g.players.add(m[1], self)
+      self.num_player = g.num_players # 0 based player id
       g.num_players += 1
       g.players.sendMessage(m[1] + ' has joined')
       self.write_message('assign ' + str(g.num_players))
@@ -32,7 +33,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       g.messages = toro.Queue(maxsize=10)
       g.start()
     elif m[0] == 'play':
-      self.clientMessages.put(m[1])
+      if not g.players[self.num_player].played: # check if player has played before
+        self.clientMessages.put(m[1])
+      else:
+        self.write_message('Please wait your turn!')
     elif m[0] == 'declare':
       # m[1] is player num, m[2] is suit
       g.messages.put(m[1] + ' ' + m[2])

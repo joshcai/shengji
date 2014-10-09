@@ -23,6 +23,7 @@ class Players(object):
 
   def __init__(self):
     self.players = []
+    self.played = False
 
   def __len__(self):
     return len(self.players)
@@ -135,15 +136,22 @@ class Round(object):
     while not self.hands[0].empty():
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()
+      # make sure no player plays more than once per trick
+      for player in self.players:
+        player.played = False
       for i in range(self.num_players):
+        if i == 0:
+          self.players.sendMessage('newtrick')
         turn = (i+start_player) % 4
         self.players[turn].sendMessage('Your turn!')
         while True: # prevent cheating
           cardNum = yield self.players[turn].fromClient().get()
           cardNum = int(cardNum)
+          # if first player, or if player suit matches, or if hand has no suit of the one being currently played
           if i == 0 or self.hands[turn][cardNum].suit == t[0].suit or not self.hands[turn].containsSuit(t[0].suit):
             break
           self.players[turn].sendMessage('Illegal move')
+        self.players[turn].played = True
         played_card = self.hands[turn].removeCard(cardNum)
         if i == 0:
           self.players.sendMessage('tricktype ' + played_card.suit)

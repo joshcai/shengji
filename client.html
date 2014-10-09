@@ -23,7 +23,9 @@
     <script>
 
       var ws = new WebSocket("ws://localhost:7000/ws");
-      var player_num, current_suit, trump_num, num_counter;
+      var player_num, trump_num, num_counter;
+      var current_suit = false;
+      var played = false;
       var cards = [];
 
       var NUM = {
@@ -47,7 +49,7 @@
       }
 
       function addToChat(message) {
-            document.getElementById("game").value += message +"\n";
+        document.getElementById("game").value += message +"\n";
       };
 
       ws.onopen = function(event) {
@@ -71,6 +73,10 @@
           case "cards":
             cards = JSON.parse(m[1]);
             renderCards();
+            break;
+          case "newtrick":
+            current_suit = false;
+            played = false;
             break;
           case "tricktype":
             current_suit = m[1];
@@ -102,11 +108,15 @@
       function playCard() {
         var cardNum = document.getElementById("card").value;
         var c = cards[cardNum];
-        if(c.suit != current_suit && containsSuit(current_suit)) {
+        if(current_suit && c.suit != current_suit && containsSuit(current_suit)) {
           addToChat('Illegal move!');
+        }
+        else if(played) {
+          addToChat('Please wait until the next turn!');
         }
         else {
           ws.send("play " + cardNum);
+          played = true;
           cards.splice(cardNum, 1);
           renderCards();
         }
