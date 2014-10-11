@@ -18,13 +18,7 @@ pip install -r requirements.txt
 python shengji/app.py
 ```
 
-You'll also want to serve the client file, which you can do simply with: 
-
-```shell
-python -m SimpleHTTPServer
-```
-
-or any other HTTP server. Then, navigate to `http://localhost:8000/client.html` from any browser that supports WebSockets (pretty much all modern browsers). 
+You'll also want to serve the client, which you can find in the [shengji-client](http://github.com/joshcai/shengji-client) repository.
 
 You can run the tests using:
 
