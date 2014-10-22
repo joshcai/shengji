@@ -1,6 +1,6 @@
 shengji
 ---
-Shengji (also known as 80 Points, and many other names) is a Chinese card game, usually played with 2 decks and 4 players. You can find the [rules on how to play here](http://www.pagat.com/kt5/tractor.html).
+Shengji (also known as 80 Points and many other names) is a Chinese card game, usually played with 2 decks and 4 players. You can find the [rules on how to play here](http://www.pagat.com/kt5/tractor.html).
 
 There's still lots of pieces missing to this, including:
 
@@ -15,7 +15,7 @@ This is currently being developed using Python 3.4.1 with the Tornado framework.
 
 ```shell
 pip install -r requirements.txt
-python shengji/app.py
+python shengji.app
 ```
 
 You'll also want to serve the client, which you can find in the [shengji-client](http://github.com/joshcai/shengji-client) repository.
@@ -24,4 +24,10 @@ You can run the tests using:
 
 ```shell
 python -m unittest discover test
+```
+
+or to run an individual test, do (with the corresponding test file): 
+
+```shell
+python -m test.test_cards
 ```

@@ -1,17 +1,26 @@
-import cards
+import shengji.cards as cards
 
 class Player(object):
 
   def __init__(self, name="Default", ws=None):
-    self.name = name
-    self.ws = ws
+    self.name = name 
+    self.ws = ws # WebSockets connection
     self.hand = cards.Hand()
-    self.played = False
+    self.played = False # prevent player from playing twice in one trick
 
   def sendMessage(self, message):
+    """Send message to specific player.
+
+    Args:
+      message: String, message to send
+    """
     self.ws.write_message(message)
 
   def fromClient(self):
+    """Returns toro queue with client messages.
+
+    To get next message, use .get() 
+    """
     return self.ws.clientMessages
 
 class Players(object):
@@ -42,5 +51,10 @@ class Players(object):
   # TODO: removePlayer function
 
   def sendMessage(self, message):
+    """Sends message to all players.
+
+    Args:
+      message: String, message to send.
+    """
     for player in self.players:
       player.sendMessage(message)

@@ -4,8 +4,8 @@ import time
 from tornado.ioloop import IOLoop
 import tornado.gen
 
-import cards
-import players
+import shengji.cards as cards
+import shengji.players as players
 
 
 class Round(object):
@@ -132,6 +132,12 @@ class Round(object):
     return self.determineFinal()
 
   def determineFinal(self):
+    """Determine how much the round score should move.
+
+    Returns:
+      Tuple, first element is 0 or 1 depending on who is attacking,
+      second is the amount to jump by
+    """
     a = self.num_players * 10
     if self.score == 0:
       return (self.defenders, 3)

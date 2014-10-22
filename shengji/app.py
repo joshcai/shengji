@@ -1,4 +1,4 @@
-import game
+import shengji.game as game
 
 import tornado.ioloop
 import tornado.web
