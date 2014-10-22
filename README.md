@@ -15,7 +15,7 @@ This is currently being developed using Python 3.4.1 with the Tornado framework.
 
 ```shell
 pip install -r requirements.txt
-python shengji.app
+python -m shengji.app
 ```
 
 You'll also want to serve the client, which you can find in the [shengji-client](http://github.com/joshcai/shengji-client) repository.
