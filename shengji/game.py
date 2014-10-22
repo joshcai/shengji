@@ -1,55 +1,12 @@
 import random
 import time
 
-import cards
-
 from tornado.ioloop import IOLoop
 import tornado.gen
 
-class Player(object):
+import cards
+import players
 
-  def __init__(self, name="Default", ws=None):
-    self.name = name
-    self.ws = ws
-    self.hand = cards.Hand()
-
-  def sendMessage(self, message):
-    self.ws.write_message(message)
-
-  def fromClient(self):
-    return self.ws.clientMessages
-
-class Players(object):
-
-  def __init__(self):
-    self.players = []
-    self.played = False
-
-  def __len__(self):
-    return len(self.players)
-
-  def __getitem__(self, index):
-    return self.players[index]
-
-  def __iter__(self):
-    self.a = 0
-    return self
-
-  def __next__(self):
-    if self.a >= len(self.players):
-      raise StopIteration
-    result = self.players[self.a]
-    self.a += 1
-    return result
-
-  def add(self, name, ws):
-    self.players.append(Player(name, ws))
-
-  # TODO: removePlayer function
-
-  def sendMessage(self, message):
-    for player in self.players:
-      player.sendMessage(message)
 
 class Round(object):
 
@@ -133,6 +90,7 @@ class Round(object):
     yield self.bottomExchange()
     self.tricks = []
     start_player = self.bottom_player
+
     while not self.hands[0].empty():
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()
@@ -193,7 +151,7 @@ class Game(object):
 
   def __init__(self):
     self.num_players = 0
-    self.players = Players()
+    self.players = players.Players()
     self.deck = cards.Deck(2)
     self.round_scores = [2, 2]
     self.messages = None

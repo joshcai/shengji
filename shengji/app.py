@@ -12,6 +12,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
   name = None
 
   def check_origin(self, origin):
+    # Currently accepts all origins, since this is being hosted on port 7000, 
+    # and the client page is beingserved on some other portTODO: Restrict to 
+    # certain domain
     return True
 
   def open(self):
