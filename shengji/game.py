@@ -4,8 +4,7 @@ import time
 from tornado.ioloop import IOLoop
 import tornado.gen
 
-import shengji.cards as cards
-import shengji.players as players
+from shengji import cards, players
 
 
 class Round(object):
@@ -62,7 +61,7 @@ class Round(object):
       card = self.deck.getNextCard()
       self.hands[i%4].append(card)
       self.players[i%4].sendMessage('deal ' + card.convertToJson())
-      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .5)
+      yield tornado.gen.Task(IOLoop.instance().add_timeout, time.time() + .2)
     for i in range(self.bottom_size):
       self.bottom.append(self.deck.getNextCard())
     self.messages.put('finished dealing')
@@ -95,8 +94,7 @@ class Round(object):
       print('   Player ' + str(start_player) + ' starting')
       t = cards.Trick()
       # make sure no player plays more than once per trick
-      for player in self.players:
-        player.played = False
+      self.game.played.clear()
       for i in range(self.num_players):
         if i == 0:
           self.players.sendMessage('newtrick')
@@ -105,18 +103,21 @@ class Round(object):
         while True: # prevent cheating
           cardNum = yield self.players[turn].fromClient().get()
           cardNum = int(cardNum)
-          # if first player, or if player suit matches, or if hand has no suit of the one being currently played
-          if i == 0 or self.hands[turn][cardNum].suit == t[0].suit or not self.hands[turn].containsSuit(t[0].suit):
+          # if first player, or if player suit matches, 
+          # or if hand has no suit of the one being currently played
+          if (i == 0 or self.hands[turn][cardNum].suit == t[0].suit 
+              or not self.hands[turn].containsSuit(t[0].suit)):
             break
           self.players[turn].sendMessage('Illegal move')
-        self.players[turn].played = True
+        self.game.played.add(turn)
         played_card = self.hands[turn].removeCard(cardNum)
         if i == 0:
           self.players.sendMessage('tricktype ' + played_card.suit)
-        self.players.sendMessage('Player ' + str(turn) + ' played ' + str(played_card))
+        self.players.sendMessage('Player %s played %s' 
+                                 % (str(turn),str(played_card)))
         t.append(played_card)
       start_player = (t.biggest() + start_player) % 4
-      self.players.sendMessage('Player ' + str(start_player) + ' won last trick')
+      self.players.sendMessage('Player %s won last trick' % str(start_player))
       if start_player % 2 != self.defenders:
         self.score += t.points()
         self.players.sendMessage('score ' + str(self.score))
@@ -158,6 +159,7 @@ class Game(object):
   def __init__(self):
     self.num_players = 0
     self.players = players.Players()
+    self.played = set()
     self.deck = cards.Deck(2)
     self.round_scores = [2, 2]
     self.messages = None

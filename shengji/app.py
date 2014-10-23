@@ -1,4 +1,4 @@
-import shengji.game as game
+from shengji import game
 
 import tornado.ioloop
 import tornado.web
@@ -36,7 +36,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
       g.messages = toro.Queue(maxsize=10)
       g.start()
     elif m[0] == 'play':
-      if not g.players[self.num_player].played: # check if player has played before
+      if self.num_player not in g.played: # check if player has played before
         self.clientMessages.put(m[1])
       else:
         self.write_message('Please wait your turn!')

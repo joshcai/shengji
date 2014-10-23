@@ -1,5 +1,5 @@
 import unittest
-import shengji.cards as cards
+from shengji import cards
 
 class TestCards(unittest.TestCase):
 
@@ -26,7 +26,7 @@ class TestCards(unittest.TestCase):
 
   def testContainsCardRaiseException(self):
     with self.assertRaises(Exception):
-      c = cards.CardS()
+      c = cards.Cards()
       c.append(cards.Card(4, 'hearts'))
       c.append(cards.Card(4, 'hearts'))
       (4) in c

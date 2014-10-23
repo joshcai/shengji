@@ -1,4 +1,4 @@
-import shengji.cards as cards
+from shengji import cards
 
 class Player(object):
 
@@ -6,7 +6,6 @@ class Player(object):
     self.name = name 
     self.ws = ws # WebSockets connection
     self.hand = cards.Hand()
-    self.played = False # prevent player from playing twice in one trick
 
   def sendMessage(self, message):
     """Send message to specific player.
